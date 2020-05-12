@@ -30,7 +30,7 @@ bp = Blueprint("reddit", __name__)
 
 @bp.route("/", methods=("GET", "POST"))
 def index():
-    song_match_regexp = r"^(.*)\s(by|-)\s(\w+)(.*)"
+    song_match_regexp = r"^(.*)\s(by|-)([A-Za-z\t ]+)+"
     """Scrape a reddit post."""
     if request.method == "POST":
         url = request.form["url"]
@@ -52,15 +52,16 @@ def index():
             songs = []
             submission.comment_sort = "top"
             submission.comments.replace_more(limit=1)
-            exclude_words = ["SONG", "COMMENT", "ICON", "COMMENTS", "SONGS", "ICONS"]
+            exclude_words = ["SONG", "COMMENT", "ICON", "COMMENTS", "SONGS", "ICONS", "ALBUM", "ALBUMS"]
             print("Fetching top comments")
             for top_level_comment in submission.comments:
                 # We only want short-ish replies as we're looking for songs and not meta or chatter
-                if len(top_level_comment.body) < 90:   
+                if len(top_level_comment.body) < 150:   
                     cleaned_comment = clean(top_level_comment.body)
                     if re.match(song_match_regexp, cleaned_comment, re.IGNORECASE):
                         song_match = re.match(song_match_regexp, cleaned_comment)
-                        songs.append(song_match.group(1))
+                        song_to_search = song_match.group(1) + " " + song_match.group(2) + " " + song_match.group(3)
+                        songs.append(song_to_search)
                     else:
                         print("Extracting entities")
                         document = types.Document(
@@ -68,14 +69,19 @@ def index():
                             type=enums.Document.Type.PLAIN_TEXT)                    
                         # Extract entities of the comments
                         entities = client.analyze_entities(document=document).entities
-                        # If the entity is a work of art, append it to the list.
+                        # If the entity is either work of art or a person, append it to the list.
+                        song_and_artist = []
                         for entity in entities:   
                             # entity type number 5 is WORK_OF_ART              
-                            if entity.type == 5 and entity.name.upper() not in exclude_words:
-                                songs.append(entity.name)
+                            if (entity.type == 5 and entity.name.upper() not in exclude_words) or entity.type == 1:
+                                song_and_artist.append(entity.name)
+                        if len(song_and_artist) > 0:
+                            songs.append(" - ".join(song_and_artist))
+
             print("Matching songs with Google play music")
             for song in songs:        
                 search_result = g_music.search(song, max_results=20)    
+                print("Searching for " + song)
                 if("song_hits" in search_result):
                     if len(search_result["song_hits"]) > 0:
                         song_id = search_result["song_hits"][0]["track"]["storeId"]; 

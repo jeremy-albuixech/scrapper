@@ -42,3 +42,4 @@ Look for the oauth URL in the console and follow the Oauth process.
 
 1. Visual feedback on client side when scrapping (sockets implementation + ajax)
 2. Allow to cherry pick the songs from google play search results to prevent mistakes 
+3. Save entities in cache to limit requests to the API
