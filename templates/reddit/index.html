@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Scrape a post{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+  {% if google_auth %}
+    <p>You are authenticated with Google Play Music.</p>
+    <form method="post">
+      <label for="url">Reddit post comments URL</label>
+      <input name="url" id="url" value="{{ request.form['url'] }}" required>
+      <label for="playlist">New playlist name</label>
+      <input name="playlist" id="playlist" value="{{ request.form['playlist'] }}" >
+      <input type="submit" value="Submit">
+    </form>
+    {% for post in posts %}
+      <article class="post">
+        <p class="body">{{ post }}</p>
+      </article>
+      {% if not loop.last %}
+        <hr>
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    <p>You are not authenticated with Google Play Music. Make sure to visit the <a href="{{ url_for('google_config.google_config') }}">Google Config</a> page first.</p>
+  {% endif %}
+ 
+{% endblock %}

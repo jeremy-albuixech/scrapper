@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Google configuration{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <form method="post" id="androidconfig">
+    <label for="title">Android ID</label>
+    <input name="androidid" id="androidid" value="{{ request.form['androidid'] }}" required>
+    <input type="button" onclick="submitGoogleConfig()" value="Submit and generate Oauth token">
+    <p class="error">{{error}}</p>
+  </form>
+
+  {% if google_auth %} 
+  <form method="post" id="googlelogout" action="/google_logout">
+    <input type="button" onClick="logout()" value="Logout">
+  </form>
+  {% endif %}
+  <script src="{{ url_for('static', filename='google.js') }}"></script>
+{% endblock %}
+
